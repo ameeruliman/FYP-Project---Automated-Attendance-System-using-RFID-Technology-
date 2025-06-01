@@ -7,7 +7,7 @@ function logMessage($message) {
     file_put_contents($logFile, "[$timestamp] $message" . PHP_EOL, FILE_APPEND);
 }
 function sendEmailAlert($to, $name) {
-    $from = 'attendance@yourcompany.com'; // Replace with your actual email
+    $from = 'ameeruliman6051@gmail.com'; // Replace with your actual email
     $fromName = 'Attendance System';
     $subject = 'Attendance Reminder: Clock-in Required';
     $date = date('l, F j, Y');
