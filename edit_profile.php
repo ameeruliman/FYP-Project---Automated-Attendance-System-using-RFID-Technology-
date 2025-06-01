@@ -7,10 +7,13 @@ if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'staff') {
     exit();
 }
 
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "rfid_attendance";
+// Database connection
+// $servername = "localhost";
+// $username = "root";  // Default username for XAMPP
+// $password = "";      // Default password for XAMPP
+// $dbname = "rfid_attendance";
+
+include 'db_connection.php';
 
 // Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);

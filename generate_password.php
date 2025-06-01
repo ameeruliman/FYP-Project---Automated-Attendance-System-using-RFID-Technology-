@@ -3,10 +3,13 @@
 echo "<p>Hashed password for 'azim':<br>" . password_hash('azim', PASSWORD_BCRYPT) . "</p>";
 
 // Database connection setup
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "rfid_attendance";
+// Database connection
+// $servername = "localhost";
+// $username = "root";  // Default username for XAMPP
+// $password = "";      // Default password for XAMPP
+// $dbname = "rfid_attendance";
+
+include 'db_connection.php';
 
 try {
     // Create a new PDO connection
