@@ -1,9 +1,11 @@
 <?php
 // Database connection
-$servername = "localhost";
-$username = "root";  // Default username for XAMPP
-$password = "";      // Default password for XAMPP
-$dbname = "rfid_attendance";
+// $servername = "localhost";
+// $username = "root";  // Default username for XAMPP
+// $password = "";      // Default password for XAMPP
+// $dbname = "rfid_attendance";
+
+include 'db_connection.php';
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 
