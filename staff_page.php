@@ -18,6 +18,31 @@ $stmt->execute();
 $result = $stmt->get_result();
 $user_data = $result->fetch_assoc();
 $stmt->close();
+
+// Check if the staff has clocked in today
+$showLateAlert = false;
+$today = date('Y-m-d');
+$currentHour = (int)date('G'); // 24-hour format without leading zeros
+$currentMinute = (int)date('i');
+$dayOfWeek = date('N'); // 1 (Monday) to 7 (Sunday)
+
+// Only check on weekdays (Monday to Friday) during working hours (1 AM - 5 PM) for testing
+if ($dayOfWeek >= 1 && $dayOfWeek <= 5 && $currentHour >= 8 && $currentHour < 17) {
+    // Check if it's past 1:05 AM for testing
+    if (($currentHour == 8 && $currentMinute >= 5) || $currentHour > 8) {
+        // Check if the staff has clocked in today
+        $checkClockIn = $conn->prepare("SELECT id FROM attendance WHERE user_id = ? AND DATE(time_in) = ?");
+        $checkClockIn->bind_param("is", $user_data['id'], $today);
+        $checkClockIn->execute();
+        $clockInResult = $checkClockIn->get_result();
+        
+        // If no clock-in record found, show the alert
+        if ($clockInResult->num_rows == 0) {
+            $showLateAlert = true;
+        }
+        $checkClockIn->close();
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -51,7 +76,28 @@ $stmt->close();
             font-size: 1.8em;
             font-weight: 600;
         }
+        
+        /* Warning Banner Styles */
+        .warning-banner {
+            background-color: #f43f5e;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 0;
+        }
+        
+        .warning-banner p {
+            margin: 5px 0;
+            line-height: 1.5;
+        }
+        
+        .warning-banner strong {
+            font-weight: 700;
+        }
 
+        /* Existing styles continue below */
         .container {
             display: flex;
             gap: 30px;
@@ -282,6 +328,15 @@ $stmt->close();
 <header>
     <h1>Staff Dashboard</h1>
 </header>
+
+<?php if ($showLateAlert): ?>
+<!-- Late Clock-in Warning Banner -->
+<div class="warning-banner">
+    <p>Our records show that you have not clocked in yet today (<?php echo date('l, F j, Y'); ?>).</p>
+    <p><strong>Please remember that clock-in time is 1:00 AM, and you are now delayed.</strong></p>
+    <p>If you are already at work, please clock in immediately. If you are taking leave today, please update your status in the system.</p>
+</div>
+<?php endif; ?>
 
 <div class="container">
     <div class="left-panel">
