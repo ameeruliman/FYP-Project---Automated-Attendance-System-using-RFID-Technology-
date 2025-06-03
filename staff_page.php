@@ -26,9 +26,9 @@ $currentHour = (int)date('G'); // 24-hour format without leading zeros
 $currentMinute = (int)date('i');
 $dayOfWeek = date('N'); // 1 (Monday) to 7 (Sunday)
 
-// Only check on weekdays (Monday to Friday) during working hours (1 AM - 5 PM) for testing
+// Only check on weekdays (Monday to Friday) during working hours (8 AM - 5 PM) 
 if ($dayOfWeek >= 1 && $dayOfWeek <= 5 && $currentHour >= 8 && $currentHour < 17) {
-    // Check if it's past 1:05 AM for testing
+    // Check if it's past 8:05 AM for 
     if (($currentHour == 8 && $currentMinute >= 5) || $currentHour > 8) {
         // Check if the staff has clocked in today
         $checkClockIn = $conn->prepare("SELECT id FROM attendance WHERE user_id = ? AND DATE(time_in) = ?");
@@ -333,7 +333,7 @@ if ($dayOfWeek >= 1 && $dayOfWeek <= 5 && $currentHour >= 8 && $currentHour < 17
 <!-- Late Clock-in Warning Banner -->
 <div class="warning-banner">
     <p>Our records show that you have not clocked in yet today (<?php echo date('l, F j, Y'); ?>).</p>
-    <p><strong>Please remember that clock-in time is 1:00 AM, and you are now delayed.</strong></p>
+    <p><strong>Please remember that clock-in time is 8:00 AM, and you are now delayed.</strong></p>
     <p>If you are already at work, please clock in immediately. If you are taking leave today, please update your status in the system.</p>
 </div>
 <?php endif; ?>
