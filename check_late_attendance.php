@@ -11,8 +11,8 @@ function sendEmailAlert($to, $name) {
     $fromName = 'Attendance System';
     $subject = 'Attendance Reminder: Clock-in Required';
     $date = date('l, F j, Y');
-    $textMessage = "Dear $name,\n\nOur records show that you have not clocked in yet today ($date).\nPlease remember that clock-in time is 8:00 AM, and you are now delayed.\n\nIf you are already at work, please clock in immediately.\nIf you are taking leave today, please update your status in the system.\n\nThis is an automated message from the Attendance System.\nPlease do not reply to this email.\n\nRegards,\nHR Department";
-    $htmlMessage = "<html><head><style>body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }.container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }.header { background-color: #f8f8f8; padding: 10px; border-bottom: 1px solid #ddd; }.footer { font-size: 12px; color: #777; margin-top: 30px; padding-top: 10px; border-top: 1px solid #ddd; }h2 { color: #444; }.important { color: #d9534f; font-weight: bold; }</style></head><body><div class='container'><div class='header'><h2>Attendance Reminder</h2></div><p>Dear <strong>$name</strong>,</p><p>Our records show that you have not clocked in yet today (<strong>$date</strong>).</p><p class='important'>Please remember that clock-in time is 8:00 AM, and you are now delayed.</p><p>If you are already at work, please clock in immediately.</p><p>If you are taking leave today, please update your status in the system.</p><div class='footer'><p>This is an automated message from the Attendance System.<br>Please do not reply to this email.</p><p>Regards,<br>HR Department</p></div></div></body></html>";
+    $textMessage = "Dear $name,\n\nOur records show that you have not clocked in yet today ($date).\nPlease remember that clock-in time is 1:30 PM, and you are now delayed.\n\nIf you are already at work, please clock in immediately.\nIf you are taking leave today, please update your status in the system.\n\nThis is an automated message from the Attendance System.\nPlease do not reply to this email.\n\nRegards,\nHR Department";
+    $htmlMessage = "<html><head><style>body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }.container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }.header { background-color: #f8f8f8; padding: 10px; border-bottom: 1px solid #ddd; }.footer { font-size: 12px; color: #777; margin-top: 30px; padding-top: 10px; border-top: 1px solid #ddd; }h2 { color: #444; }.important { color: #d9534f; font-weight: bold; }</style></head><body><div class='container'><div class='header'><h2>Attendance Reminder</h2></div><p>Dear <strong>$name</strong>,</p><p>Our records show that you have not clocked in yet today (<strong>$date</strong>).</p><p class='important'>Please remember that clock-in time is 1:30 PM, and you are now delayed.</p><p>If you are already at work, please clock in immediately.</p><p>If you are taking leave today, please update your status in the system.</p><div class='footer'><p>This is an automated message from the Attendance System.<br>Please do not reply to this email.</p><p>Regards,<br>HR Department</p></div></div></body></html>";
     $headers = "From: $fromName <$from>\r\n";
     $headers .= "Reply-To: $from\r\n";
     $headers .= "Return-Path: $from\r\n";
@@ -45,7 +45,9 @@ if ($dayOfWeek >= 1 && $dayOfWeek <= 5) {
     $currentHour = (int)date('G');
     $currentMinute = (int)date('i');
     $isTest = isset($_GET['test']) && $_GET['test'] == '1';
-    if ($isTest || (($currentHour == 8 && $currentMinute >= 5) || ($currentHour > 8 && $currentHour < 10))) {
+    
+    // Check if current time is between 1:45 PM and 5:00 PM
+    if ($isTest || (($currentHour == 13 && $currentMinute >= 45) || ($currentHour > 13 && $currentHour < 17))) {
         logMessage("Starting late attendance check" . ($isTest ? " (TEST MODE)" : ""));
         $today = date('Y-m-d');
         $sql = "SELECT u.id, u.username, u.email FROM users u WHERE u.id NOT IN (SELECT user_id FROM attendance WHERE DATE(clock_in) = ? AND clock_in IS NOT NULL) AND u.role = 'staff' AND u.status = 'active'";
@@ -81,7 +83,7 @@ if ($dayOfWeek >= 1 && $dayOfWeek <= 5) {
         logMessage("Script executed outside target time window. Current time: " . date('H:i'));
         if (isset($_GET['test']) && $_GET['test'] == '1') {
             echo "<h2>Outside Target Time Window</h2>";
-            echo "<p>This script is designed to run between 8:05 AM and 10:00 AM on weekdays.</p>";
+            echo "<p>This script is designed to run between 1:45 PM and 5:00 PM on weekdays.</p>";
             echo "<p>Current time: " . date('H:i') . "</p>";
             echo "<p>Current day: " . date('l') . "</p>";
         }
