@@ -1,5 +1,6 @@
 <?php
 session_start();
+date_default_timezone_set('Asia/Kuala_Lumpur'); // or your local timezone
 
 // Check if the user is logged in and is a staff
 if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'staff') {
@@ -26,23 +27,21 @@ $currentHour = (int)date('G'); // 24-hour format without leading zeros
 $currentMinute = (int)date('i');
 $dayOfWeek = date('N'); // 1 (Monday) to 7 (Sunday)
 
-// Only check on weekdays (Monday to Friday) during working hours (8 AM - 5 PM) 
-if ($dayOfWeek >= 1 && $dayOfWeek <= 5 && $currentHour >= 8 && $currentHour < 17) {
-    // Check if it's past 8:05 AM for 
-    if (($currentHour == 8 && $currentMinute >= 5) || $currentHour > 8) {
-        // Check if the staff has clocked in today
+// Show delay alert every day (Monday to Sunday) between 8:15 AM and 5:00 PM if not clocked in
+if ($currentHour >= 8 && $currentHour < 17) {
+    // Check if it's past 8:15 AM
+    if (($currentHour == 8 && $currentMinute >= 15) || $currentHour > 8) {
         $checkClockIn = $conn->prepare("SELECT id FROM attendance WHERE user_id = ? AND DATE(time_in) = ?");
         $checkClockIn->bind_param("is", $user_data['id'], $today);
         $checkClockIn->execute();
         $clockInResult = $checkClockIn->get_result();
-        
-        // If no clock-in record found, show the alert
         if ($clockInResult->num_rows == 0) {
             $showLateAlert = true;
         }
         $checkClockIn->close();
     }
 }
+
 ?>
 
 <!DOCTYPE html>
