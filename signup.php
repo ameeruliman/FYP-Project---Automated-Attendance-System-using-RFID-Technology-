@@ -4,6 +4,7 @@ session_start();
 
 include 'db_connection.php';
 
+$error_message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!isset($_SESSION['awaiting_rfid'])) {
         // Step 1: Validate user input and process form
@@ -49,21 +50,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     VALUES ('$username', '$password_hash', '$role', '$uid', '$uid', NOW())";
 
             if ($conn->query($sql) === TRUE) {
-                echo "Registration successful!";
                 session_destroy(); // Clear session after success
-                header("Location: loginPage.php");
+                header("Location: signup.php?registered=1");
                 exit();
             } else {
                 echo "Error: " . $conn->error;
             }
         } else {
-            echo "RFID card not detected. Please tap your card again.";
+            $error_message = "RFID card not detected. Please tap your card again.";
+            $_GET['step'] = 'rfid'; // Force stay on RFID step
         }
+    }
+} 
+
+// Move this block just before the RFID step form
+if (isset($_GET['step']) && $_GET['step'] === 'rfid') {
+    $filename = 'latest_uid.txt';
+    if (file_exists($filename)) {
+        file_put_contents($filename, '');
     }
 }
 $conn->close();
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -237,6 +245,12 @@ $conn->close();
     </style>
 </head>
 <body>
+    <?php if (isset($_GET['registered'])): ?>
+    <script>
+        alert("Registration successful!");
+        window.location.href = "loginPage.php";
+    </script>
+    <?php endif; ?>
     <div class="header">
         <h1>Sekolah Agama Parit Jelutong</h1>
         <h2>Attendance Manager</h2>
@@ -308,19 +322,45 @@ $conn->close();
             <a href="loginPage.php" class="back-link">Already have an account? Login here</a>
         </form>
     <?php else: ?>
+        <!-- Clear UID again here to be sure -->
+        <?php
+        $filename = 'latest_uid.txt';
+        if (file_exists($filename)) {
+            file_put_contents($filename, '');
+        }
+        ?>
         <!-- RFID Tap Prompt -->
         <form class="form" action="signup.php" method="POST">
-            <p id="heading">Enter Your RFID Card UID</p>
+            <p id="heading">Please Scan Your RFID Card</p>
             <img src="SAPJ_Logo.jpg" alt="School Logo" class="logo">
+            <?php if (!empty($error_message)): ?>
+                <div class="error-message"><?php echo $error_message; ?></div>
+            <?php endif; ?>
             <div class="field">
                 <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12zM6 10h2v2H6zm0 4h8v2H6z"/>
                 </svg>
-                <input type="text" name="uid" class="input-field" placeholder="Please enter UID card..." required>
+                <input type="text" name="uid" class="input-field" placeholder="Waiting for UID card..." required>
             </div>
-            <div class="btn">
+            <!-- You can remove the Register button if you want full auto -->
+            <!-- <div class="btn">
                 <button type="submit" class="button1">Register</button>
-            </div>
+            </div> -->
+            <script>
+            let lastUid = "";
+            setInterval(function() {
+                fetch('get_latest_uid.php')
+                    .then(response => response.text())
+                    .then(uid => {
+                        if(uid.length > 0 && uid !== lastUid) {
+                            document.querySelector('input[name="uid"]').value = uid;
+                            lastUid = uid;
+                            // Auto-submit the form
+                            document.querySelector('form').submit();
+                        }
+                    });
+            }, 1000);
+            </script>
         </form>
     <?php endif; ?>
 </body>
