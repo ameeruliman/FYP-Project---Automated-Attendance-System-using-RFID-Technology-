@@ -9,6 +9,45 @@ if (!isset($_SESSION['username']) || !in_array($_SESSION['role'], ['admin', 'hea
 
 require_once 'db_connection.php'; // Include database connection
 
+// Add this at the top of the file after session_start()
+if (isset($_POST['delete_id']) && $_SESSION['role'] === 'admin') {
+    $staff_id = intval($_POST['delete_id']);
+    
+    // Start transaction
+    $conn->begin_transaction();
+    
+    try {
+        // Delete from all related tables in correct order
+        $tables = [
+            'attendance',
+            'leave_applications', // Added this table
+            'emergency_info',
+            'users'
+        ];
+        
+        foreach ($tables as $table) {
+            $field = ($table === 'users') ? 'id' : 'user_id';
+            $stmt = $conn->prepare("DELETE FROM $table WHERE $field = ?");
+            $stmt->bind_param("i", $staff_id);
+            $stmt->execute();
+            $stmt->close();
+        }
+        
+        // Commit the transaction
+        $conn->commit();
+        $_SESSION['success_message'] = "Staff member deleted successfully";
+        
+    } catch (Exception $e) {
+        // Rollback on error
+        $conn->rollback();
+        $_SESSION['error_message'] = "Error deleting staff: " . $e->getMessage();
+    }
+    
+    // Redirect to refresh the page
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit();
+}
+
 // Fetch all staff members with the correct columns from the database
 $stmt = $conn->prepare("
     SELECT id, username, role, staff_id, phone, email, created_at
@@ -31,285 +70,355 @@ $stmt->close();
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-light: #818cf8;
+            --primary-dark: #4338ca;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --dark-color: #1e293b;
+            --light-color: #f8fafc;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --radius: 16px;
+            --transition: all 0.3s ease;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: #f8fafc;
-            margin: 0;
-            padding: 0;
-            color: #1e293b;
+            background: #fff;
+            color: var(--dark-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
         }
-
-        header {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            color: #fff;
+        .main-container {
             width: 100%;
-            padding: 25px 0;
-            text-align: center;
-            position: relative;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            max-width: 1200px;
+            background: #fff;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
             overflow: hidden;
+            padding: 2rem;
+            position: relative;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            margin-bottom: 2rem;
         }
-
-        header h1 {
-            font-size: 2.5em;
+        .main-container::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--primary-color), var(--primary-light), var(--success-color));
+            border-radius: 6px 6px 0 0;
+        }
+        .page-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        .page-header h1 {
+            font-size: 2.2rem;
             font-weight: 700;
-            margin: 0;
+            color: var(--primary-dark);
+            margin-bottom: 0.5rem;
             position: relative;
             display: inline-block;
-            background: linear-gradient(90deg, #fff, #e2e8f0);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -moz-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-
-        main {
-            width: 95%;
-            max-width: 1400px;
-            padding: 30px;
-            margin: 0 auto;
+        .page-header h1::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
+            border-radius: 3px;
         }
-
-        .staff-container {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            padding: 30px;
-            margin-bottom: 30px;
+        .page-header p {
+            color: #64748b;
+            font-size: 1.1rem;
         }
-
-        .staff-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 25px;
-            margin-top: 20px;
-        }
-
-        .staff-card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-            overflow: hidden;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            border: 1px solid #e2e8f0;
-        }
-
-        .staff-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .staff-header {
-            background: linear-gradient(135deg, #9333ea 0%, #7e22ce 100%);
-            color: white;
-            padding: 20px;
-            text-align: center;
-            position: relative;
-        }
-
-        .profile-image {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 4px solid white;
-            margin: 0 auto 15px;
-            display: block;
-            background-color: #f1f5f9;
-        }
-
-        .staff-name {
-            font-size: 1.3em;
-            font-weight: 600;
-            margin: 0;
-        }
-
-        .staff-role {
-            font-size: 0.9em;
-            opacity: 0.9;
-            margin-top: 5px;
-        }
-
-        .staff-details {
-            padding: 20px;
-        }
-
-        .detail-item {
-            margin-bottom: 15px;
+        .alert {
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
             display: flex;
             align-items: center;
+            animation: slideIn 0.5s ease;
         }
-
-        .detail-item .material-icons {
-            margin-right: 10px;
-            color: #9333ea;
-            font-size: 20px;
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
-
-        .detail-label {
-            font-weight: 500;
-            color: #64748b;
-            font-size: 0.9em;
-            margin-bottom: 3px;
+        .alert .material-icons {
+            margin-right: 0.75rem;
+            font-size: 1.5rem;
         }
-
-        .detail-value {
-            color: #1e293b;
-            font-size: 1em;
+        .alert-success {
+            background-color: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--success-color);
+            color: #065f46;
         }
-
-        .btn {
-            text-align: center;
-            margin-top: 30px;
+        .alert-error {
+            background-color: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid var(--danger-color);
+            color: #b91c1c;
         }
-
-        .button1 {
-            background: linear-gradient(135deg, #1e2a38 0%, #2d3a4e 100%);
+        .card {
+            background-color: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+        .card-header .material-icons {
+            font-size: 1.75rem;
+            margin-right: 0.75rem;
+            color: var(--primary-color);
+            background: rgba(79, 70, 229, 0.1);
+            padding: 0.5rem;
+            border-radius: 50%;
+        }
+        .card-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--dark-color);
+            margin: 0;
+        }
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 10px;
+            background: #fff;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+        }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 0;
+        }
+        th, td {
+            padding: 1.2rem;
+            text-align: left;
+            vertical-align: middle;
+        }
+        th {
+            background-color: rgba(79, 70, 229, 0.05);
+            font-weight: 600;
+            color: var(--primary-dark);
+            position: relative;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        th:first-child { border-top-left-radius: 10px; }
+        th:last-child { border-top-right-radius: 10px; }
+        tr:last-child td:first-child { border-bottom-left-radius: 10px; }
+        tr:last-child td:last-child { border-bottom-right-radius: 10px; }
+        td {
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.95rem;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr { transition: var(--transition); }
+        tr:hover { background-color: rgba(79, 70, 229, 0.03); }
+        .profile-image {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #ede9fe;
+            background-color: #ede9fe;
+            margin-right: 18px;
+            display: block;
+        }
+        .delete-form {
+            display: inline;
+        }
+        .delete-btn {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
             color: white;
-            padding: 12px 25px;
-            text-decoration: none;
+            border: none;
+            padding: 0.7rem 1.6rem;
             border-radius: 8px;
-            font-size: 1.1em;
-            transition: all 0.3s ease;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1em;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+            transition: background 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.08);
+        }
+        .delete-btn .material-icons {
+            font-size: 22px;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #94a3b8;
+        }
+        .empty-state .material-icons {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #cbd5e1;
+        }
+        .empty-state p {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+        .footer-actions {
+            display: flex;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            box-shadow: 0 4px 6px rgba(79, 70, 229, 0.25);
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+            text-decoration: none;
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            transition: var(--transition);
         }
-
-        .button1:hover {
-            background: linear-gradient(135deg, #2d3a4e 0%, #1e2a38 100%);
+        .btn-primary:hover {
             transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(79, 70, 229, 0.3);
         }
-
-        .empty-state {
-            text-align: center;
-            padding: 50px 20px;
-            color: #64748b;
+        @media (max-width: 900px) {
+            .main-container { padding: 1.5rem; }
+            th, td { padding: 0.75rem; }
+            .profile-image { width: 56px; height: 56px; }
         }
-
-        .empty-state .material-icons {
-            font-size: 48px;
-            margin-bottom: 15px;
-            color: #9333ea;
-        }
-
-        .empty-state p {
-            font-size: 1.1em;
-            margin-bottom: 20px;
-        }
-
-        @media (max-width: 768px) {
-            .staff-grid {
-                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            }
-        }
-
-        @media (max-width: 480px) {
-            main {
-                padding: 15px;
-            }
-            
-            .staff-grid {
-                grid-template-columns: 1fr;
-            }
+        @media (max-width: 600px) {
+            .main-container { padding: 0.5rem; }
+            .card { padding: 0.5rem; }
+            th, td { padding: 0.5rem; }
+            .profile-image { width: 44px; height: 44px; }
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Registered Staff</h1>
-    </header>
-
-    <main>
-        <div class="staff-container">
-            <h2>All Staff Members</h2>
-            
-            <?php if (count($staff_members) > 0): ?>
-                <div class="staff-grid">
-                    <?php foreach ($staff_members as $staff): ?>
-                        <div class="staff-card">
-                            <div class="staff-header">
-                                <?php
-                                    $profile_image = 'uploads/' . $staff['username'] . '.jpg';
-                                    $profile_image_png = 'uploads/' . $staff['username'] . '.png';
-                                    if (file_exists($profile_image)) {
-                                        $profile_pic = $profile_image;
-                                    } elseif (file_exists($profile_image_png)) {
-                                        $profile_pic = $profile_image_png;
-                                    } else {
-                                        $profile_pic = 'default_profile.jpg';
-                                    }
-                                ?>
-                                <img src="<?php echo htmlspecialchars($profile_pic); ?>" alt="" class="profile-image">
-                                <h3 class="staff-name"><?php echo htmlspecialchars($staff['username']); ?></h3>
-                                <p class="staff-role">Staff Member</p>
-                            </div>
-                            <div class="staff-details">
-                                <div class="detail-item">
-                                    <span class="material-icons">person</span>
-                                    <div>
-                                        <div class="detail-label">Username</div>
-                                        <div class="detail-value"><?php echo htmlspecialchars($staff['username']); ?></div>
-                                    </div>
-                                </div>
-                                
-                                <div class="detail-item">
-                                    <span class="material-icons">badge</span>
-                                    <div>
-                                        <div class="detail-label">Staff ID</div>
-                                        <div class="detail-value"><?php echo htmlspecialchars($staff['staff_id'] ?? 'Not assigned'); ?></div>
-                                    </div>
-                                </div>
-                                
-                                <div class="detail-item">
-                                    <span class="material-icons">email</span>
-                                    <div>
-                                        <div class="detail-label">Email</div>
-                                        <div class="detail-value"><?php echo htmlspecialchars($staff['email'] ?? 'Not provided'); ?></div>
-                                    </div>
-                                </div>
-                                
-                                <div class="detail-item">
-                                    <span class="material-icons">phone</span>
-                                    <div>
-                                        <div class="detail-label">Phone</div>
-                                        <div class="detail-value"><?php echo htmlspecialchars($staff['phone'] ?? 'Not provided'); ?></div>
-                                    </div>
-                                </div>
-                                
-                                <div class="detail-item">
-                                    <span class="material-icons">calendar_today</span>
-                                    <div>
-                                        <div class="detail-label">Joined</div>
-                                        <div class="detail-value"><?php echo date('F j, Y', strtotime($staff['created_at'])); ?></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php else: ?>
-                <div class="empty-state">
-                    <span class="material-icons">people</span>
-                    <p>No staff members registered yet.</p>
-                </div>
-            <?php endif; ?>
+    <div class="main-container">
+        <div class="page-header">
+            <h1>Registered Staff</h1>
+            <p>Manage all staff members in the system</p>
         </div>
 
-        <div class="btn">
-            <?php if ($_SESSION['role'] === 'admin'): ?>
-                <a href="admin_page.php" class="button1">
-                    <span class="material-icons">arrow_back</span>
-                    Back to Dashboard
-                </a>
-            <?php else: ?>
-                <a href="hm_page.php" class="button1">
-                    <span class="material-icons">arrow_back</span>
-                    Back to Dashboard
-                </a>
-            <?php endif; ?>
+        <?php if (isset($_SESSION['success_message'])): ?>
+            <div class="alert alert-success">
+                <span class="material-icons">check_circle</span>
+                <div><?php echo $_SESSION['success_message']; unset($_SESSION['success_message']); ?></div>
+            </div>
+        <?php endif; ?>
+        <?php if (isset($_SESSION['error_message'])): ?>
+            <div class="alert alert-error">
+                <span class="material-icons">error</span>
+                <div><?php echo $_SESSION['error_message']; unset($_SESSION['error_message']); ?></div>
+            </div>
+        <?php endif; ?>
+
+        <div class="card">
+            <div class="card-header">
+                <span class="material-icons">groups</span>
+                <h2>All Staff Members</h2>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Profile</th>
+                            <th>Username</th>
+                            <th>Staff ID</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Joined</th>
+                            <?php if ($_SESSION['role'] === 'admin'): ?>
+                                <th>Actions</th>
+                            <?php endif; ?>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (!empty($staff_members)): ?>
+                            <?php foreach ($staff_members as $staff): ?>
+                                <tr>
+                                    <td>
+                                        <?php
+                                            $profile_image = 'uploads/' . $staff['username'] . '.jpg';
+                                            $profile_image_png = 'uploads/' . $staff['username'] . '.png';
+                                            if (file_exists($profile_image)) {
+                                                $profile_pic = $profile_image;
+                                            } elseif (file_exists($profile_image_png)) {
+                                                $profile_pic = $profile_image_png;
+                                            } else {
+                                                $profile_pic = 'default_profile.jpg';
+                                            }
+                                        ?>
+                                        <img src="<?php echo htmlspecialchars($profile_pic); ?>" alt="" class="profile-image">
+                                    </td>
+                                    <td><?php echo htmlspecialchars($staff['username']); ?></td>
+                                    <td><?php echo htmlspecialchars($staff['staff_id'] ?? 'Not assigned'); ?></td>
+                                    <td><?php echo htmlspecialchars($staff['email'] ?? 'Not provided'); ?></td>
+                                    <td><?php echo htmlspecialchars($staff['phone'] ?? 'Not provided'); ?></td>
+                                    <td><?php echo date('F j, Y', strtotime($staff['created_at'])); ?></td>
+                                    <?php if ($_SESSION['role'] === 'admin'): ?>
+                                        <td>
+                                            <form method="POST" onsubmit="return confirm('Are you sure you want to delete this staff member?');" class="delete-form">
+                                                <input type="hidden" name="delete_id" value="<?php echo $staff['id']; ?>">
+                                                <button type="submit" class="delete-btn">
+                                                    <span class="material-icons">delete</span>
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        </td>
+                                    <?php endif; ?>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="<?php echo ($_SESSION['role'] === 'admin') ? '7' : '6'; ?>">
+                                    <div class="empty-state">
+                                        <span class="material-icons">inbox</span>
+                                        <p>No staff members registered yet.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </main>
+
+        <div class="footer-actions">
+            <a href="admin_page.php" class="btn-primary">
+                <span class="material-icons">dashboard</span>
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
 </body>
 </html>

@@ -3,6 +3,7 @@ include 'db_connection.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'])) {
     $uid = preg_replace('/[^A-Fa-f0-9]/', '', $_POST['uid']);
+    $mode = isset($_POST['mode']) ? $_POST['mode'] : 'scan';
 
     // Check if UID exists in users table
     $stmt = $conn->prepare("SELECT id, username FROM users WHERE rfid = ? OR uid = ?");
@@ -45,9 +46,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'])) {
         }
         $stmt2->close();
     } else {
-        // UID not found: store for registration
-        file_put_contents('latest_uid.txt', $uid);
-        echo "Done Register";
+        if ($mode === 'register') {
+            // Register the UID to the user (implement your registration logic here)
+            // Example: update users set rfid=? where id=?
+            // For now, just return Done Register
+            echo "Done Register";
+        } else {
+            // Just save UID for registration, do not register yet
+            file_put_contents('latest_uid.txt', $uid);
+            echo "Not assigned";
+        }
     }
     $stmt->close();
 } else {
