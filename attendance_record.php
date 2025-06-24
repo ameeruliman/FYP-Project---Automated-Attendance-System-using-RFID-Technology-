@@ -11,13 +11,13 @@ if (!isset($_SESSION['username'])) {
     exit();
 }
 
-// Get the logged-in user's username
+
 $logged_in_user = $_SESSION['username'];
 
-// Determine if the user is admin or headmaster
+
 $is_admin = ($logged_in_user === 'admin' || $_SESSION['role'] === 'headmaster');
 
-// Get all staff members for admin dropdown
+
 $staff_list = [];
 if ($is_admin) {
     $staff_sql = "SELECT id, username FROM users WHERE username != 'admin' AND username != 'hm' ORDER BY username";
@@ -29,13 +29,13 @@ if ($is_admin) {
     }
 }
 
-// Handle staff filter
+
 $selected_staff = isset($_GET['staff']) ? $_GET['staff'] : '';
 
-// Define the SQL query
+
 if ($is_admin) {
     if (!empty($selected_staff)) {
-        // Admin sees filtered staff attendance records
+
         $sql = "SELECT a.id, u.username, a.time_in, a.time_out 
                 FROM attendance a
                 JOIN users u ON a.user_id = u.id
@@ -44,7 +44,7 @@ if ($is_admin) {
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("s", $selected_staff);
     } else {
-        // Admin sees all attendance records
+
         $sql = "SELECT a.id, u.username, a.time_in, a.time_out 
                 FROM attendance a
                 JOIN users u ON a.user_id = u.id
@@ -227,15 +227,24 @@ $result = $stmt->get_result();
             background-color: #f8fafc;
         }
 
-        .status-active {
-            color: #10b981;
-            background: #dcfce7;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            font-weight: 500;
-            display: inline-block;
-        }
+.status-in {
+    color: #2563eb;
+    background: #dbeafe;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 500;
+    display: inline-block;
+}
+.status-out {
+    color: #10b981;
+    background: #dcfce7;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 500;
+    display: inline-block;
+}
 
         .time {
             font-family: 'Roboto Mono', monospace;
@@ -376,7 +385,8 @@ $result = $stmt->get_result();
                             
                             $date_in = $time_in->format('Y-m-d');
                             $clock_in = $time_in->format('H:i:s');
-                            $status = $row['time_out'] ? '' : '<span class="status-active">Active</span>';
+                            // Set status: "Clock-in" if no time_out, "Clocked-out" if time_out exists
+                            $status = $row['time_out'] ? '<span class="status-out">Clocked-out</span>' : '<span class="status-in">Clocked-in</span>';
                             
                             echo "<tr>
                                 <td>#{$row['id']}</td>

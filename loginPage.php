@@ -236,7 +236,7 @@ switch ($error) {
             </div>
         <?php endif; ?>
 
-        <!-- Username Field -->
+        <!-- Username -->
         <div class="field">
             <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
@@ -244,7 +244,7 @@ switch ($error) {
             <input name="username" autocomplete="off" placeholder="Username" class="input-field" type="text" required>
         </div>
 
-        <!-- Password Field -->
+        <!-- Password -->
         <div class="field">
             <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6z"/>
@@ -252,7 +252,7 @@ switch ($error) {
             <input name="password" placeholder="Password" class="input-field" type="password" required>
         </div>
 
-        <!-- Login Button -->
+        <!-- Login -->
         <div class="btn">
             <button type="submit" class="button1">Login</button>
         </div>

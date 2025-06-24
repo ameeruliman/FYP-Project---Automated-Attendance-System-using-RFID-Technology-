@@ -28,7 +28,7 @@ $currentMinute = (int)date('i');
 $dayOfWeek = date('N'); // 1 (Monday) to 7 (Sunday)
 
 // Show delay alert every day (Monday to Sunday) between 8:15 AM and 5:00 PM if not clocked in
-if ($currentHour >= 8 && $currentHour < 17) {
+if ($currentHour >= 8 && $currentHour < 21) {
     // Check if it's past 8:15 AM
     if (($currentHour == 8 && $currentMinute >= 15) || $currentHour > 8) {
         $checkClockIn = $conn->prepare("SELECT id FROM attendance WHERE user_id = ? AND DATE(time_in) = ?");
