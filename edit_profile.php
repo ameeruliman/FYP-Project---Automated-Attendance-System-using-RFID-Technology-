@@ -355,7 +355,8 @@ $conn->close();
             </div>
 
             <button type="submit" class="submit-btn">Save Changes</button>
-            <a href="staff_page.php" class="back-btn">Back to Dashboard</a>
+            <!-- Removed the Back to Dashboard button -->
+            <!-- <a href="staff_page.php" class="back-btn">Back to Dashboard</a> -->
         </form>
     </div>
 

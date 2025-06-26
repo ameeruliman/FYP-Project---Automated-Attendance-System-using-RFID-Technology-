@@ -363,16 +363,6 @@ $result = $stmt->get_result();
             margin-bottom: 20px;
         }
 
-        .footer-actions {
-            display: flex;
-            justify-content: center;
-            margin-top: 30px;
-        }
-
-        .footer-actions .btn {
-            margin: 0 10px;
-        }
-
         @media (max-width: 768px) {
             .main-container {
                 padding: 20px;
@@ -505,13 +495,6 @@ $result = $stmt->get_result();
                     </div>
                     <?php endif; ?>
                 </div>
-            </div>
-
-            <div class="footer-actions">
-                <a href="staff_page.php" class="btn">
-                    <span class="material-icons" style="vertical-align: middle; margin-right: 8px;">arrow_back</span>
-                    Back to Staff Page
-                </a>
             </div>
         </div>
     </div>

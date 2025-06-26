@@ -286,40 +286,6 @@ $stmt->close();
             font-size: 1.1rem;
             margin-bottom: 1rem;
         }
-        .footer-actions {
-            display: flex;
-            justify-content: center;
-            margin-top: 2rem;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-            color: white;
-            box-shadow: 0 4px 6px rgba(79, 70, 229, 0.25);
-            padding: 0.75rem 1.5rem;
-            font-size: 1rem;
-            border-radius: 8px;
-            font-weight: 500;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: var(--transition);
-        }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 8px rgba(79, 70, 229, 0.3);
-        }
-        @media (max-width: 900px) {
-            .main-container { padding: 1.5rem; }
-            th, td { padding: 0.75rem; }
-            .profile-image { width: 56px; height: 56px; }
-        }
-        @media (max-width: 600px) {
-            .main-container { padding: 0.5rem; }
-            .card { padding: 0.5rem; }
-            th, td { padding: 0.5rem; }
-            .profile-image { width: 44px; height: 44px; }
-        }
     </style>
 </head>
 <body>
@@ -411,13 +377,6 @@ $stmt->close();
                     </tbody>
                 </table>
             </div>
-        </div>
-
-        <div class="footer-actions">
-            <a href="admin_page.php" class="btn-primary">
-                <span class="material-icons">dashboard</span>
-                Back to Dashboard
-            </a>
         </div>
     </div>
 </body>

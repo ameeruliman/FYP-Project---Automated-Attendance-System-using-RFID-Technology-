@@ -490,7 +490,9 @@ $conn->close();
                             <th>From</th>
                             <th>Until</th>
                             <th>Status</th>
-                            <th>Actions</th>
+                            <?php if ($_SESSION['role'] === 'headmaster'): ?>
+                                <th>Actions</th>
+                            <?php endif; ?>
                         </tr>
                     </thead>
                     <tbody>
@@ -521,34 +523,36 @@ $conn->close();
                                             <?php echo ucfirst($application['status']); ?>
                                         </span>
                                     </td>
-                                    <td>
-                                        <?php if ($application['status'] === 'Pending'): ?>
-                                            <form method="POST" style="display:inline;">
-                                                <input type="hidden" name="leave_id" value="<?php echo $application['leave_id']; ?>">
-                                                <button type="submit" name="action" value="approve" class="btn btn-approve">
-                                                    <span class="material-icons">check</span> Approve
-                                                </button>
-                                            </form>
-                                            <form method="POST" style="display:inline;">
-                                                <input type="hidden" name="leave_id" value="<?php echo $application['leave_id']; ?>">
-                                                <button type="submit" name="action" value="reject" class="btn btn-reject">
-                                                    <span class="material-icons">close</span> Reject
-                                                </button>
-                                            </form>
-                                        <?php else: ?>
-                                            <form method="POST" style="display:inline;">
-                                                <input type="hidden" name="leave_id" value="<?php echo $application['leave_id']; ?>">
-                                                <button type="submit" name="action" value="delete" class="btn btn-delete">
-                                                    <span class="material-icons">delete</span> Clear
-                                                </button>
-                                            </form>
-                                        <?php endif; ?>
-                                    </td>
+                                    <?php if ($_SESSION['role'] === 'headmaster'): ?>
+                                        <td>
+                                            <?php if ($application['status'] === 'Pending'): ?>
+                                                <form method="POST" style="display:inline;">
+                                                    <input type="hidden" name="leave_id" value="<?php echo $application['leave_id']; ?>">
+                                                    <button type="submit" name="action" value="approve" class="btn btn-approve">
+                                                        <span class="material-icons">check</span> Approve
+                                                    </button>
+                                                </form>
+                                                <form method="POST" style="display:inline;">
+                                                    <input type="hidden" name="leave_id" value="<?php echo $application['leave_id']; ?>">
+                                                    <button type="submit" name="action" value="reject" class="btn btn-reject">
+                                                        <span class="material-icons">close</span> Reject
+                                                    </button>
+                                                </form>
+                                            <?php else: ?>
+                                                <form method="POST" style="display:inline;">
+                                                    <input type="hidden" name="leave_id" value="<?php echo $application['leave_id']; ?>">
+                                                    <button type="submit" name="action" value="delete" class="btn btn-delete">
+                                                        <span class="material-icons">delete</span> Clear
+                                                    </button>
+                                                </form>
+                                            <?php endif; ?>
+                                        </td>
+                                    <?php endif; ?>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="7">
+                                <td colspan="<?php echo ($_SESSION['role'] === 'headmaster') ? '7' : '6'; ?>">
                                     <div class="empty-state">
                                         <span class="material-icons">inbox</span>
                                         <p>No leave applications to approve.</p>
@@ -559,13 +563,6 @@ $conn->close();
                     </tbody>
                 </table>
             </div>
-        </div>
-
-        <div class="footer-actions">
-            <a href="admin_page.php" class="btn btn-primary">
-                <span class="material-icons">dashboard</span>
-                Back to Dashboard
-            </a>
         </div>
     </div>
 </body>
